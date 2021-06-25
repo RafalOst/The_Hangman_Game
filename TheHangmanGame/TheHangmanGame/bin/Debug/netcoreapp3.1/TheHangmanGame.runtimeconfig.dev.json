@@ -1,0 +1,8 @@
+{
+  "runtimeOptions": {
+    "additionalProbingPaths": [
+      "/Users/rafal/.dotnet/store/|arch|/|tfm|",
+      "/Users/rafal/.nuget/packages"
+    ]
+  }
+}
