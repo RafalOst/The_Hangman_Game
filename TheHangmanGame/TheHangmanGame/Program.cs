@@ -1,28 +1,27 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System; //using (na poczatku pliku) to sa moduly importowane do projektu aby ich uzyc
+using System.Collections.Generic; //typy generyczne maja < > ostre nawiase
+using System.IO; // input output
+using System.Linq; //operacje na kolekcjach np na liscie 
 
 
 //TODO
-// czas gry (licznik) - You guessed the capital after xx letters. It took you xx seconds
-// high score: name| date | guessing_time | guessing_tries | guessed_word (i.e. Marcin | 26.10.2016 14:15 | 45 | Warsaw).
-// export do pliku
-// import hasel metoda getGamePassword
-// dodac hinta jak polowa HP!
+// high score odczytywanie
 // instrukcja gry
 // test
 
-namespace TheHangmanGame //gra w szubienice ze stolicami
+namespace TheHangmanGame //identyfikator sluzoacy do kwalifikacji danych obiektow w ramach danego zestawu
 {
-    class Program
+    class Program //klasy, bardzo duza malych 
     {
-        public static void Main(string[] args)
+        public static void Main(string[] args) //main to metoda specialna i zawsze od niej startuje program (domyslny start)
         {
-            DisplayWelcomeScreen();
+               DisplayWelcomeScreen(); // funkcje maja zawsze () okragle  nawiasy
+
         }
 
-        public static void DisplayWelcomeScreen()
+        public static void DisplayWelcomeScreen() // funkcja void nic nie zwraca
         {
-            string welcomeText = @"██   ██  █████  ███    ██  ██████  ███    ███  █████  ███    ██ 
+            string welcomeText =@"██   ██  █████  ███    ██  ██████  ███    ███  █████  ███    ██ 
 ██   ██ ██   ██ ████   ██ ██       ████  ████ ██   ██ ████   ██ 
 ███████ ███████ ██ ██  ██ ██   ███ ██ ████ ██ ███████ ██ ██  ██ 
 ██   ██ ██   ██ ██  ██ ██ ██    ██ ██  ██  ██ ██   ██ ██  ██ ██ 
@@ -63,7 +62,11 @@ namespace TheHangmanGame //gra w szubienice ze stolicami
         {
             // kod gry
             Console.Clear();
-            string gamePassword = GetGamePassword().ToLower();
+            DateTime startTime = DateTime.Now;
+            string [] countryAndCapital = GetCountryAndCapital();
+            //string gamePassword = countryAndCapital[1].ToLower();// wyciaga stolice
+            string gamePassword = "warszawa"; //TODO remove after debug i odkomentowac wyzej
+            string gameHint = "The capital of " + countryAndCapital[0];
             int life = 6;
 
             //https://stackoverflow.com/questions/3575029/c-sharp-liststring-to-string-with-delimiter
@@ -72,14 +75,22 @@ namespace TheHangmanGame //gra w szubienice ze stolicami
             bool isGameFinished = false;
             while (!isGameFinished) //!  bo jest zaprzeczenie
             {
-                //dodac hinta jak life == 3
+                //funkcje przyjmuja parametr np: funkcja DisplayLife przyjmuje parametr life
                 Console.Clear();
                 DisplayLife(life);
                 DisplayGuessingTries(guessingTries);
                 DisplayHangman(life);
-                DisplayPassword(gamePassword, userInputCharacters);
-                DisplayUsedCharacters(userInputCharacters, gamePassword);
+                DisplayPassword(gamePassword, userInputCharacters); //kolejnosc parametrow zalezna od definicji funkcji
+                DisplayUsedCharactersNotInPassword(userInputCharacters, gamePassword);
                 Console.WriteLine();
+                if (life <= 3)
+                {
+                    Console.WriteLine("HINT: " + gameHint);
+                }
+                else
+                {
+                    Console.WriteLine();
+                }
                 Console.WriteLine();
                 Console.WriteLine("Input word or letter and press enter");
                 string userInput = Console.ReadLine().ToLower();
@@ -96,7 +107,7 @@ namespace TheHangmanGame //gra w szubienice ze stolicami
                     guessingTries += 1;
                     if (userInput == gamePassword)
                     {
-                        WinGame(gamePassword, guessingTries);// TODO czas
+                        WinGame(gamePassword, guessingTries, startTime);
                     }
                     else
                     {
@@ -110,7 +121,7 @@ namespace TheHangmanGame //gra w szubienice ze stolicami
                 {
                     guessingTries += 1;
                     char userInputCharacter = userInput[0]; //pierwszy elemnt z listy
-                    if (!userInputCharacters.Contains(userInputCharacter) )
+                    if (!userInputCharacters.Contains(userInputCharacter) ) // gwarantuje unikalnosc elementow dodanych do listy
                     {
                         userInputCharacters.Add(userInputCharacter);
                     }
@@ -119,6 +130,10 @@ namespace TheHangmanGame //gra w szubienice ze stolicami
                     if (gamePassword.ToLower().Contains(userInput))
                     {
                         int foundLetters = 0;
+
+                        // https://stackoverflow.com/questions/17096494/counting-number-of-letters-in-a-string-variable
+                        int passwordLenghtWihoutSpaces = gamePassword.Count(char.IsLetter);
+
                         for (int i = 0; i < gamePassword.Length; i++)
                         {
                             if (userInputCharacters.Contains(gamePassword[i]))
@@ -127,14 +142,15 @@ namespace TheHangmanGame //gra w szubienice ze stolicami
                             }
                            
                         }
-                        if (foundLetters == gamePassword.Length)
+                        if (foundLetters == passwordLenghtWihoutSpaces)
                         {
-                            WinGame(gamePassword, guessingTries);
+                            WinGame(gamePassword, guessingTries, startTime);
                         }
                         else
                         {
                             Console.WriteLine("You guessed correctly");
                             Console.WriteLine("Press any key to continue...");
+
                             Console.ReadKey();
                         }
                     }
@@ -156,6 +172,15 @@ namespace TheHangmanGame //gra w szubienice ze stolicami
             LooseGame();
         }
 
+        private static void AppendToHighScores(string textToExport)
+        {
+            string fileName = "high_score.txt";
+            List<string> toExport = new List<string>();
+            toExport.Add(textToExport);
+            File.AppendAllLines(fileName, toExport);
+
+        }
+
         private static void LooseGame()
         {
             Console.Clear();
@@ -165,12 +190,10 @@ namespace TheHangmanGame //gra w szubienice ze stolicami
             DisplayHighScore();
         }
 
-        private static void WinGame(string gamePassword, int guessingTries)
+        private static void WinGame(string gamePassword, int guessingTries, DateTime startTime)
         {
-            //TODO dodac zapytanie o imie
-            //TODO zliczenie gameDartion
-            //TODO eksport danych do pliku ze statystykami
             Console.Clear();
+            DateTime endTime = DateTime.Now;
             Console.WriteLine("You win! :)");
             Console.WriteLine();
             Console.WriteLine();
@@ -182,7 +205,10 @@ namespace TheHangmanGame //gra w szubienice ze stolicami
             {
                 Console.Write("You guessed the capital after " + guessingTries + " letters.");
             }
-            int gameDuration = 10;
+
+            TimeSpan timeDifference = endTime - startTime;
+            int gameDuration = timeDifference.Seconds;
+
             if (gameDuration == 1)
             {
                 Console.Write("It took you " + gameDuration + " second");
@@ -194,9 +220,14 @@ namespace TheHangmanGame //gra w szubienice ze stolicami
             Console.WriteLine();
             Console.WriteLine();
             Console.WriteLine("Please share your name...");
-            Console.ReadLine();
+            string userName = Console.ReadLine();
+            //TODO zmienic format daty
+            string textToExport = userName + " | "+ DateTime.Now + " | " + gameDuration + " | " + guessingTries + " | " + gamePassword;
+            AppendToHighScores(textToExport);
             Console.Clear();
             DisplayHighScore();
+
+            //name| date | guessing_time | guessing_tries | guessed_word (i.e. Marcin | 26.10.2016 14:15 | 45 | Warsaw).
         }
 
         private static void DisplayHighScore()
@@ -240,7 +271,7 @@ namespace TheHangmanGame //gra w szubienice ze stolicami
             }   
         }
 
-        private static void DisplayUsedCharacters(List<char> userInputCharacters, string passwordCharacters)
+        private static void DisplayUsedCharactersNotInPassword(List<char> userInputCharacters, string passwordCharacters)
         {
             Console.WriteLine();
             Console.Write("You typed incorrect characters: ");
@@ -265,7 +296,7 @@ namespace TheHangmanGame //gra w szubienice ze stolicami
 
             for (int i = 0; i < input.Length; i++)   
             {
-                if (!char.IsLetter(input[i]))
+                if (!char.IsLetter(input[i]) && input[i]!= ' ')
                 {
                     return -1;
                 }
@@ -294,6 +325,10 @@ namespace TheHangmanGame //gra w szubienice ze stolicami
                 if (passwordContainsLetter)
                 {
                     Console.Write(password[i]);
+                }
+                else if (password[i] == ' ')
+                {
+                    Console.Write(" ");
                 }
                 else
                 {
@@ -400,11 +435,26 @@ namespace TheHangmanGame //gra w szubienice ze stolicami
             }
         }
 
-        private static string GetGamePassword()
+        private static string[] GetCountryAndCapital()
         {
-            // tu wprowadzic polaczenie z plikiem z miastami
-            string gamePassword = "Warszawa";
-            return gamePassword;
+            //https://docs.microsoft.com/pl-pl/dotnet/api/system.io.file.readalllines?view=net-5.0
+
+            string fileName = "countries_and_capitals.txt";
+            if (!File.Exists(fileName)) //jesli nie ma danego plik to go tworzy i zapisuje Poland | Warsaw
+            {
+                // Create a file to write to.
+                string[] createText = { "Poland | Warsaw"};
+                File.WriteAllLines(fileName, createText);
+            }
+            // Open the file to read from.
+            string[] readText = File.ReadAllLines(fileName);
+            Random random = new Random();
+            int result = random.Next(readText.Length);
+            string randomCountryAndCapital = readText[result];
+
+            //https://docs.microsoft.com/pl-pl/dotnet/api/system.string.split?view=net-5.0
+            string[] subs = randomCountryAndCapital.Split(" | "); // panstwo 1, stolica 2 
+            return subs;
         }
 
         private static void DisplayInstruction()
