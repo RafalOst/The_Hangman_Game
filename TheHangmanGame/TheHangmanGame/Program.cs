@@ -3,12 +3,6 @@ using System.Collections.Generic; //typy generyczne maja < > ostre nawiase
 using System.IO; // input output
 using System.Linq; //operacje na kolekcjach np na liscie 
 
-
-//TODO
-// high score odczytywanie
-// instrukcja gry
-// test
-
 namespace TheHangmanGame //identyfikator sluzoacy do kwalifikacji danych obiektow w ramach danego zestawu
 {
     class Program //klasy, bardzo duza malych 
@@ -64,8 +58,7 @@ namespace TheHangmanGame //identyfikator sluzoacy do kwalifikacji danych obiekto
             Console.Clear();
             DateTime startTime = DateTime.Now;
             string [] countryAndCapital = GetCountryAndCapital();
-            //string gamePassword = countryAndCapital[1].ToLower();// wyciaga stolice
-            string gamePassword = "warszawa"; //TODO remove after debug i odkomentowac wyzej
+            string gamePassword = countryAndCapital[1].ToLower();// wyciaga stolice
             string gameHint = "The capital of " + countryAndCapital[0];
             int life = 6;
 
@@ -233,7 +226,12 @@ namespace TheHangmanGame //identyfikator sluzoacy do kwalifikacji danych obiekto
         private static void DisplayHighScore()
         {
             // import danych z pliku ktory powstanie :)
-            Console.WriteLine("TOP10 placeholder");
+            Console.WriteLine();
+            string[] highScores = GetHighScores();
+            for (int i = 0; i < highScores.Length; i++)
+            {
+                Console.WriteLine((i+1) +" : "+ highScores[i]);
+            }
 
             AskForRestart();
         }
@@ -457,8 +455,34 @@ namespace TheHangmanGame //identyfikator sluzoacy do kwalifikacji danych obiekto
             return subs;
         }
 
+        private static string[] GetHighScores()
+        {
+            string fileName = "high_score.txt";
+            if (!File.Exists(fileName)) //jesli nie ma danego plik to go tworzy (pusty)
+            {
+                // Create a file to write to.
+                string[] createText = new string[0];
+                File.WriteAllLines(fileName, createText);
+            }
+            string[] readText = File.ReadAllLines(fileName);
+
+            //TODO postarac sie to napisac metodami ktore znam
+            // powered by Tobi
+            var delimiter = " | ";
+            var topTenScores = readText
+                .Select(_ => _.Split(delimiter))
+                .OrderBy(_ => _[3]) // by tries
+                .ThenBy(_ => _[2]) // by duration
+                .ThenBy(_ => _[1]) // by date
+                .Take(10)
+                .Select(_ => string.Join(delimiter, _))
+                .ToArray();
+            return topTenScores; 
+        }
+
         private static void DisplayInstruction()
         {
+            //TODO instrukcja
             string instructionText = "loremipsum";
 
             Console.Clear();
