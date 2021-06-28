@@ -1,5 +1,6 @@
 ﻿using System; //using (na poczatku pliku) to sa moduly importowane do projektu aby ich uzyc
 using System.Collections.Generic; //typy generyczne maja < > ostre nawiase
+using System.Globalization;
 using System.IO; // input output
 using System.Linq; //operacje na kolekcjach np na liscie 
 
@@ -27,7 +28,7 @@ namespace TheHangmanGame //identyfikator sluzoacy do kwalifikacji danych obiekto
             Console.WriteLine("by Rafal Ostachowicz");
             Console.WriteLine();
             Console.WriteLine("Press s to start game");
-            Console.WriteLine("Press i to read instruction");
+            //Console.WriteLine("Press i to read instruction");
             Console.WriteLine("Press x to quit");
 
 
@@ -38,10 +39,10 @@ namespace TheHangmanGame //identyfikator sluzoacy do kwalifikacji danych obiekto
                 EndHangman();
             }
 
-            else if (input == 'i')
+            /*else if (input == 'i')
             {
                 DisplayInstruction();
-            }
+            } */
             else if (input == 's')
             {
                 StartGame();
@@ -70,6 +71,11 @@ namespace TheHangmanGame //identyfikator sluzoacy do kwalifikacji danych obiekto
             {
                 //funkcje przyjmuja parametr np: funkcja DisplayLife przyjmuje parametr life
                 Console.Clear();
+
+                //TODO show password
+                /*bool testing = true;
+                if (testing) { Console.WriteLine(gamePassword); }*/
+
                 DisplayLife(life);
                 DisplayGuessingTries(guessingTries);
                 DisplayHangman(life);
@@ -214,8 +220,11 @@ namespace TheHangmanGame //identyfikator sluzoacy do kwalifikacji danych obiekto
             Console.WriteLine();
             Console.WriteLine("Please share your name...");
             string userName = Console.ReadLine();
-            //TODO zmienic format daty
-            string textToExport = userName + " | "+ DateTime.Now + " | " + gameDuration + " | " + guessingTries + " | " + gamePassword;
+            if (string.IsNullOrEmpty(userName))
+            {
+                userName = "noName";
+            }
+            string textToExport = userName + " | " + DateTime.Now.ToString("g", new CultureInfo("de-DE")) + " | " + gameDuration + " | " + guessingTries + " | " + gamePassword;
             AppendToHighScores(textToExport);
             Console.Clear();
             DisplayHighScore();
@@ -225,7 +234,6 @@ namespace TheHangmanGame //identyfikator sluzoacy do kwalifikacji danych obiekto
 
         private static void DisplayHighScore()
         {
-            // import danych z pliku ktory powstanie :)
             Console.WriteLine();
             string[] highScores = GetHighScores();
             for (int i = 0; i < highScores.Length; i++)
@@ -272,15 +280,20 @@ namespace TheHangmanGame //identyfikator sluzoacy do kwalifikacji danych obiekto
         private static void DisplayUsedCharactersNotInPassword(List<char> userInputCharacters, string passwordCharacters)
         {
             Console.WriteLine();
-            Console.Write("You typed incorrect characters: ");
+            Console.Write("Letters not in password: ");
+            string lettersToPrint = "";
             for (int i = 0; i < userInputCharacters.Count; i++)
             {
                 if (!passwordCharacters.Contains(userInputCharacters[i]))
                 {
-                    Console.Write(userInputCharacters[i]+ ", ");// TODO zmienic tak aby nie pokazalo przecinak na koncu 
-                }
-                
+                    lettersToPrint += userInputCharacters[i];
+                    if (i != userInputCharacters.Count-1)
+                    {
+                        lettersToPrint += ", ";
+                    }
+                }   
             }
+            Console.WriteLine(lettersToPrint);
         }
 
         private static int CheckUserInput(string input)
@@ -466,23 +479,22 @@ namespace TheHangmanGame //identyfikator sluzoacy do kwalifikacji danych obiekto
             }
             string[] readText = File.ReadAllLines(fileName);
 
-            //TODO postarac sie to napisac metodami ktore znam
             // powered by Tobi
             var delimiter = " | ";
             var topTenScores = readText
-                .Select(_ => _.Split(delimiter))
+                .Select(_ => _.Split(delimiter)) // rozbicie
                 .OrderBy(_ => _[3]) // by tries
                 .ThenBy(_ => _[2]) // by duration
                 .ThenBy(_ => _[1]) // by date
                 .Take(10)
-                .Select(_ => string.Join(delimiter, _))
-                .ToArray();
+                .Select(_ => string.Join(delimiter, _)) //laczenie
+                .ToArray(); // do tablicy
             return topTenScores; 
         }
 
-        private static void DisplayInstruction()
+        //TODO game instruction
+        /* private static void DisplayInstruction() 
         {
-            //TODO instrukcja
             string instructionText = "loremipsum";
 
             Console.Clear();
@@ -492,7 +504,7 @@ namespace TheHangmanGame //identyfikator sluzoacy do kwalifikacji danych obiekto
             Console.ReadKey();
             DisplayWelcomeScreen();
         }
-
+        */
         private static void EndHangman()
         {
             //https://stackoverflow.com/questions/12977924/how-to-properly-exit-a-c-sharp-application
@@ -503,49 +515,3 @@ namespace TheHangmanGame //identyfikator sluzoacy do kwalifikacji danych obiekto
 
     }
 }
-
-//algorytm zadania:
-      // uzytkownik powinien otrzymac komunikata ekran powitalny 
-         // czy chce rozpoczacn gre, przeczytac zasady czy zakonczyc program
-         // jezeli rozpcznie gre to
-            //czysci ekran
-            //losowanie chasla do gry (zapytanie do bazy)
-            //rozpoczecie glownej petli gry
-                //czysci ekran
-                //wyswietla liczbe liter w hasle (_ _ _ _), obrazek szubienicy, punkty zycia (6) oraz zapytanie wprowadz litere badz odpowiedz i zatwierdz enterem
-                //program sprawdza czy uzytkownik wprowadzil haslo czy litere
-                    //jezeli litera to sprawdza czy znajduje sie w hasle
-                        //znajduje sie
-                        //nie znajduje sie
-                            //uzytkownik traci zycie (wyswietla postepujaca szubienice)
-                            //dadaje do wyswietanej listy not-in-word
-                    //jezeli haslo to porownuje z wylosowanym miastem
-                        //zgadza
-                            //oznacza koniec gry w wersji wygrana
-                        //nie zgadza
-                            //uzytkownik traci 2 pkt zycia (szubienica postepuje 2 pkt do przodu)
-                //program sprawdza czy gra sie skonczyla
-                    //wygrana
-                        //haslo zostalo odgadniete badz wprowadzono ostatnia litere
-                        //wyswietla komunikat o odgadniecu hasla
-                            //wyswietla statystki
-                            //prosi o wprowadzenie danych uzytkownika
-                            //zapisuje statystyki do pliku
-                                //w formacie: name| date | guessing_time | guessing_tries | guessed_word
-                            //czysci ekran
-                            //wczytuje wyniki TOP 10 oraz podziekowania za gre
-                                //rozpocznij ponownie
-                                //zakoncz program
-                    //przegrana
-                        //zycie sie skonczylo
-                        //sprawdza czy przekroczyl pkt zycia (jak tak to dodatkowy obrazek -1)
-                        //wczytuje wyniki TOP 10 oraz podziekowania za gre
-                            //jak starczy czasu
-                                //czy chcesz rozpoczac od nowa
-                                //zamknac program
-         // jezeli zasady to zasady gry w szubienice
-            //czysci ekran
-            //wyswietla zasady gry oraz komunikat powoc do ekranu powitalnego naciskajac dowoly przycisk
-            //oczekuj na dowolny przycisk od grajacego
-         // jezeli zakonczy to koniec programu
-            //koniec gry
